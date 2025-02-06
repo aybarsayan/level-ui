@@ -1,7 +1,8 @@
 'use client';
 import { useState, FormEvent, ChangeEvent, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Bot, User, Loader2, Sun, Moon } from 'lucide-react';
+import { Send, User, Loader2, Sun, Moon } from 'lucide-react';
+import Image from 'next/image';
 
 interface Message {
   id: number;
@@ -9,11 +10,25 @@ interface Message {
   sender: 'user' | 'bot';
 }
 
+const Avatar = ({ src, alt }: { src: string; alt: string }) => (
+  <div className="w-12 h-12 rounded-full overflow-hidden relative">
+    <Image
+      src={src}
+      alt={alt}
+      fill
+      sizes="(max-width: 48px) 100vw"
+      className="object-cover"
+      priority
+    />
+  </div>
+);
+
 const ChatInterface = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [threadId, setThreadId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -49,9 +64,22 @@ const ChatInterface = () => {
     try {
       const response = await fetch('http://localhost:3000/analiz/test', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: inputMessage })
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(threadId && { 'X-Thread-Id': threadId })
+        },
+        body: JSON.stringify({ 
+          prompt: inputMessage,
+          threadId: threadId 
+        })
       });
+
+      // Thread ID'yi headerdan al
+      const newThreadId = response.headers.get('X-Thread-Id');
+      if (newThreadId) {
+        setThreadId(newThreadId);
+        console.log('Thread ID:', newThreadId);
+      }
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
@@ -97,6 +125,7 @@ const ChatInterface = () => {
       }
     } catch (error) {
       console.error('Error:', error);
+      setThreadId(null); // Hata durumunda thread'i sıfırla
     } finally {
       setIsLoading(false);
       setInputMessage('');
@@ -111,14 +140,21 @@ const ChatInterface = () => {
     }`}>
       <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg p-6`}>
         <div className="flex justify-between items-center">
-          <motion.h1 
+          <motion.div 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-3xl font-bold flex items-center gap-3"
+            className="flex items-center gap-3"
           >
-            <Bot className={isDarkMode ? 'text-blue-400' : 'text-blue-500'} />
-            AI Asistan
-          </motion.h1>
+            <div className="flex flex-col items-center gap-1">
+              <Avatar src="/levelLogo.png" alt="Bot Logo" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-3xl font-bold">Level Asistan</span>
+              <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                Mahallenin Oyuncu Abisi
+              </span>
+            </div>
+          </motion.div>
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
@@ -143,9 +179,7 @@ const ChatInterface = () => {
               className={`flex items-end gap-2 ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               {message.sender === 'bot' && (
-                <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
-                  <Bot className="text-white w-5 h-5" />
-                </div>
+                <Avatar src="/levelLogo.png" alt="Bot Avatar" />
               )}
               <motion.div
                 initial={{ scale: 0.9 }}
@@ -161,8 +195,8 @@ const ChatInterface = () => {
                 <p className="whitespace-pre-wrap leading-relaxed">{message.text}</p>
               </motion.div>
               {message.sender === 'user' && (
-                <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center">
-                  <User className="text-white w-5 h-5" />
+                <div className="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center">
+                  <User className="text-white w-6 h-6" />
                 </div>
               )}
             </motion.div>
@@ -175,9 +209,7 @@ const ChatInterface = () => {
             animate={{ opacity: 1, y: 0 }}
             className="flex items-center gap-2"
           >
-            <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
-              <Bot className="text-white w-5 h-5" />
-            </div>
+            <Avatar src="/levelLogo.png" alt="Bot Avatar" />
             <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-white'} rounded-2xl p-4 shadow-lg`}>
               <motion.div
                 animate={{ rotate: 360 }}

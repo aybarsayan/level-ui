@@ -62,7 +62,7 @@ const ChatInterface = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3000/analiz/test', {
+      const response = await fetch('/api/analiz/test', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

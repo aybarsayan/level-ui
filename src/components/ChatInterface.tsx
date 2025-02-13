@@ -36,6 +36,25 @@ const ChatInterface = () => {
     setIsDarkMode(darkModePreference);
   }, []);
 
+  // Asistan ve vektör store'u başlat
+  useEffect(() => {
+    const initializeAssistant = async () => {
+      try {
+        const response = await fetch('/api/analiz/init', {
+          method: 'POST',
+        });
+        if (!response.ok) {
+          throw new Error('Asistan başlatılamadı');
+        }
+        console.log('Asistan başarıyla başlatıldı');
+      } catch (error) {
+        console.error('Asistan başlatma hatası:', error);
+      }
+    };
+
+    initializeAssistant();
+  }, []);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };

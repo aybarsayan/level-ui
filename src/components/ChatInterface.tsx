@@ -11,7 +11,7 @@ interface Message {
 }
 
 const Avatar = ({ src, alt }: { src: string; alt: string }) => (
-  <div className="w-12 h-12 rounded-full overflow-hidden relative">
+  <div className="w-10 h-10 rounded-xl overflow-hidden relative shadow-lg border-2 border-blue-500/20">
     <Image
       src={src}
       alt={alt}
@@ -154,40 +154,46 @@ const ChatInterface = () => {
   return (
     <div className={`flex flex-col h-screen ${
       isDarkMode 
-        ? 'bg-gradient-to-b from-gray-900 to-gray-800 text-white' 
-        : 'bg-gradient-to-b from-gray-50 to-gray-100 text-gray-800'
+        ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100' 
+        : 'bg-gradient-to-br from-blue-50 via-white to-blue-50 text-gray-800'
     }`}>
-      <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg p-6`}>
-        <div className="flex justify-between items-center">
+      <div className={`${
+        isDarkMode ? 'bg-gray-800/50 shadow-2xl' : 'bg-white/80 shadow-lg'
+      } backdrop-blur-lg p-6 border-b ${
+        isDarkMode ? 'border-gray-700' : 'border-gray-200'
+      }`}>
+        <div className="flex justify-between items-center max-w-6xl mx-auto">
           <motion.div 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-3"
+            className="flex items-center gap-4"
           >
-            <div className="flex flex-col items-center gap-1">
+            <div className="flex items-center gap-3 bg-gradient-to-r from-blue-500 to-blue-600 p-2 rounded-xl shadow-lg">
               <Avatar src="/levelLogo.png" alt="Bot Logo" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-3xl font-bold">Level Asistan</span>
-              <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                Mahallenin Oyuncu Abisi
-              </span>
+              <div className="flex flex-col">
+                <span className="text-2xl font-bold text-white font-sans">Level Asistan</span>
+                <span className="text-sm text-blue-100 font-medium">
+                  Mahallenin Oyuncu Abisi
+                </span>
+              </div>
             </div>
           </motion.div>
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={toggleTheme}
-            className={`p-2 rounded-full ${
-              isDarkMode ? 'bg-gray-700 text-yellow-400' : 'bg-gray-100 text-gray-600'
-            }`}
+            className={`p-3 rounded-xl ${
+              isDarkMode 
+                ? 'bg-gray-700 text-yellow-400 hover:bg-gray-600' 
+                : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
+            } transition-all duration-300 shadow-lg`}
           >
-            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+            {isDarkMode ? <Sun size={24} /> : <Moon size={24} />}
           </motion.button>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+      <div className="flex-1 overflow-y-auto p-6 space-y-6 max-w-6xl mx-auto w-full">
         <AnimatePresence>
           {messages.map((message) => (
             <motion.div
@@ -195,7 +201,7 @@ const ChatInterface = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className={`flex items-end gap-2 ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+              className={`flex items-end gap-3 ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               {message.sender === 'bot' && (
                 <Avatar src="/levelLogo.png" alt="Bot Avatar" />
@@ -205,17 +211,23 @@ const ChatInterface = () => {
                 animate={{ scale: 1 }}
                 className={`max-w-[70%] rounded-2xl p-4 ${
                   message.sender === 'user'
-                    ? 'bg-blue-500 text-white'
+                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-blue-500/20'
                     : isDarkMode 
-                      ? 'bg-gray-700 text-gray-100' 
-                      : 'bg-white text-gray-800'
-                } shadow-lg`}
+                      ? 'bg-gray-700/50 text-gray-100 shadow-gray-900/30' 
+                      : 'bg-white text-gray-800 shadow-gray-200/50'
+                } shadow-lg backdrop-blur-sm border ${
+                  message.sender === 'user'
+                    ? 'border-blue-600/20'
+                    : isDarkMode
+                      ? 'border-gray-600/20'
+                      : 'border-gray-200/50'
+                }`}
               >
-                <p className="whitespace-pre-wrap leading-relaxed">{message.text}</p>
+                <p className="whitespace-pre-wrap leading-relaxed font-medium">{message.text}</p>
               </motion.div>
               {message.sender === 'user' && (
-                <div className="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center">
-                  <User className="text-white w-6 h-6" />
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 flex items-center justify-center shadow-lg">
+                  <User className="text-white w-5 h-5" />
                 </div>
               )}
             </motion.div>
@@ -226,15 +238,19 @@ const ChatInterface = () => {
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-2"
+            className="flex items-center gap-3"
           >
             <Avatar src="/levelLogo.png" alt="Bot Avatar" />
-            <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-white'} rounded-2xl p-4 shadow-lg`}>
+            <div className={`${
+              isDarkMode ? 'bg-gray-700/50' : 'bg-white'
+            } rounded-xl p-4 shadow-lg backdrop-blur-sm border ${
+              isDarkMode ? 'border-gray-600/20' : 'border-gray-200/50'
+            }`}>
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
               >
-                <Loader2 className={`w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-blue-500'}`} />
+                <Loader2 className="w-5 h-5 text-blue-500" />
               </motion.div>
             </div>
           </motion.div>
@@ -244,37 +260,41 @@ const ChatInterface = () => {
 
       <motion.form 
         onSubmit={handleSendMessage} 
-        className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-6 shadow-lg`}
+        className={`${
+          isDarkMode ? 'bg-gray-800/50' : 'bg-white/80'
+        } p-6 backdrop-blur-lg border-t ${
+          isDarkMode ? 'border-gray-700' : 'border-gray-200'
+        } shadow-lg`}
         initial={{ y: 100 }}
         animate={{ y: 0 }}
       >
-        <div className="flex items-center gap-4 max-w-4xl mx-auto">
+        <div className="flex items-center gap-4 max-w-6xl mx-auto">
           <input
             type="text"
             value={inputMessage}
             onChange={(e: ChangeEvent<HTMLInputElement>) => setInputMessage(e.target.value)}
             placeholder="Mesajınızı yazın..."
-            className={`flex-1 p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+            className={`flex-1 p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium ${
               isDarkMode 
-                ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                : 'bg-white border-gray-200 text-gray-800 placeholder-gray-500'
-            }`}
+                ? 'bg-gray-700/50 border-gray-600 text-white placeholder-gray-400' 
+                : 'bg-gray-50 border-gray-200 text-gray-800 placeholder-gray-500'
+            } border shadow-lg backdrop-blur-sm`}
             disabled={isLoading}
           />
           <motion.button
             type="submit"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className={`text-white p-4 rounded-xl shadow-lg transition-all ${
+            className={`p-4 rounded-xl shadow-lg transition-all ${
               isLoading 
                 ? 'opacity-50 cursor-not-allowed' 
                 : isDarkMode 
-                  ? 'bg-blue-600 hover:bg-blue-700' 
-                  : 'bg-blue-500 hover:bg-blue-600'
-            }`}
+                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700' 
+                  : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700'
+            } text-white`}
             disabled={isLoading}
           >
-            <Send className="w-5 h-5" />
+            <Send className="w-6 h-6" />
           </motion.button>
         </div>
       </motion.form>

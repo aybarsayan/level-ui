@@ -1,8 +1,9 @@
 'use client';
 import { useState, FormEvent, ChangeEvent, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, User, Loader2 } from 'lucide-react';
+import { Send, User, Loader2, LogOut } from 'lucide-react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 interface Message {
   id: number;
@@ -24,6 +25,7 @@ const Avatar = ({ src, alt }: { src: string; alt: string }) => (
 );
 
 const ChatInterface = () => {
+  const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
@@ -122,6 +124,20 @@ const ChatInterface = () => {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+      });
+
+      if (response.ok) {
+        router.push('/');
+      }
+    } catch (error) {
+      console.error('Çıkış yapılırken hata oluştu:', error);
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen bg-gradient-to-b from-amber-50 to-orange-50">
       <div className="bg-white shadow-lg p-6">
@@ -143,6 +159,16 @@ const ChatInterface = () => {
               </span>
             </div>
           </motion.div>
+          
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleLogout}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-[#FFA302] text-white hover:from-amber-600 hover:to-[#e59202] transition-all"
+          >
+            <LogOut className="w-5 h-5" />
+            <span>Çıkış Yap</span>
+          </motion.button>
         </div>
       </div>
 

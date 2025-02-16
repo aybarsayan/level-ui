@@ -1,7 +1,7 @@
 'use client';
 import { useState, FormEvent } from 'react';
 import { motion } from 'framer-motion';
-import { LogIn, Loader2, Mail } from 'lucide-react';
+import { LogIn, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
@@ -46,7 +46,8 @@ const LoginScreen = () => {
         const data = await response.json();
         setError(data.message);
       }
-    } catch (err) {
+    } catch (error) {
+      console.error('Giriş hatası:', error);
       setError('Bir hata oluştu. Lütfen tekrar deneyin.');
     } finally {
       setIsLoading(false);
@@ -55,13 +56,16 @@ const LoginScreen = () => {
 
   const handleGoogleLogin = async () => {
     try {
+      setIsLoading(true);
       await signIn('google', {
         callbackUrl: '/chat',
-        redirect: true,
+        redirect: false
       });
     } catch (error) {
       console.error('Google giriş hatası:', error);
       setError('Google ile giriş yapılırken bir hata oluştu');
+    } finally {
+      setIsLoading(false);
     }
   };
 

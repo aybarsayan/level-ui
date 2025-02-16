@@ -1,21 +1,25 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { getToken } from "next-auth/jwt";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-export function middleware(request: NextRequest) {
-  const isAuthenticated = request.cookies.has('auth_token'); // veya sizin kullandığınız token adı
-  const isLoginPage = request.nextUrl.pathname === '/';
+export async function middleware(request: NextRequest) {
+  const token = await getToken({ req: request });
+  const isAuthPage = request.nextUrl.pathname === "/";
 
-  if (!isAuthenticated && !isLoginPage) {
-    return NextResponse.redirect(new URL('/', request.url));
+  if (isAuthPage) {
+    if (token) {
+      return NextResponse.redirect(new URL("/chat", request.url));
+    }
+    return NextResponse.next();
   }
 
-  if (isAuthenticated && isLoginPage) {
-    return NextResponse.redirect(new URL('/chat', request.url));
+  if (!token) {
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/', '/chat']
+  matcher: ["/", "/chat/:path*"]
 }; 

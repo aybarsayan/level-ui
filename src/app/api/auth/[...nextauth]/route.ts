@@ -23,8 +23,11 @@ const handler = NextAuth({
       return true;
     },
     async redirect({ url, baseUrl }) {
-      // Doğrudan chat sayfasına yönlendir
-      return baseUrl + '/chat';
+      // Eğer URL chat ile başlıyorsa veya baseUrl ile başlıyorsa, o URL'yi kullan
+      if (url.startsWith('/chat') || url.startsWith(baseUrl)) {
+        return `${baseUrl}/chat`;
+      }
+      return baseUrl;
     },
     async session({ session, user }) {
       if (session.user) {
@@ -33,11 +36,13 @@ const handler = NextAuth({
       return session;
     },
   },
-  secret: process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: '/',
+    error: '/', // Hata durumunda ana sayfaya yönlendir
   },
-  debug: true, // Debug modunu açık tutalım
+  session: {
+    strategy: "jwt",
+  },
 });
 
 export { handler as GET, handler as POST }; 

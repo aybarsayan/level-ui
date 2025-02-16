@@ -24,6 +24,7 @@ interface UserData {
 
 interface MessageWithPdf extends Message {
   pdfUrl?: string;
+  showPdf?: boolean;
 }
 
 const Avatar = ({ src, alt }: { src: string; alt: string }) => (
@@ -168,19 +169,16 @@ const ChatInterface = () => {
                 if (data.content) {
                   botMessageText += data.content;
                   
-                  // Citation'ı kontrol et (eğer daha önce bulunmadıysa)
                   if (!foundCitation) {
                     const citation = extractCitation(botMessageText);
                     if (citation !== false) {
                       console.log('Found Citation:', citation);
                       setCitation(citation);
                       setAchievementVisible(true);
-                      handleDownload(citation);
                       foundCitation = true;
                     }
                   }
 
-                  // Mesajı güncelle
                   setMessages(prev => {
                     const lastMessage = prev[prev.length - 1];
                     if (lastMessage?.sender === 'bot') {
@@ -202,6 +200,9 @@ const ChatInterface = () => {
               }
             }
           }
+        }
+        if (citation) {
+          handleDownload(citation);
         }
       }
     } catch (error) {
@@ -245,13 +246,13 @@ const ChatInterface = () => {
 
       const { data } = await response.json();
       
-      // PDF URL'ini son mesaja ekle
       setMessages(prev => {
         const lastMessage = prev[prev.length - 1];
         if (lastMessage?.sender === 'bot') {
           return [...prev.slice(0, -1), {
             ...lastMessage,
-            pdfUrl: data
+            pdfUrl: data,
+            showPdf: true
           }];
         }
         return prev;
@@ -347,23 +348,26 @@ const ChatInterface = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className={`flex items-end gap-2 ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={`flex items-start gap-4 ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 {message.sender === 'bot' && (
                   <Avatar src="/levelLogo.png" alt="Bot Avatar" />
                 )}
-                <motion.div
-                  initial={{ scale: 0.9 }}
-                  animate={{ scale: 1 }}
-                  className={`max-w-[70%] rounded-2xl p-4 ${
-                    message.sender === 'user'
-                      ? 'bg-gradient-to-r from-amber-500 to-[#FFA302] text-white'
-                      : 'bg-white text-gray-800'
-                  } shadow-lg`}
-                >
-                  <p className="whitespace-pre-wrap leading-relaxed">{message.text}</p>
+                <div className="flex items-start gap-4 max-w-full">
+                  <motion.div
+                    initial={{ scale: 0.9 }}
+                    animate={{ scale: 1 }}
+                    className={`rounded-2xl p-4 ${
+                      message.sender === 'user'
+                        ? 'bg-gradient-to-r from-amber-500 to-[#FFA302] text-white'
+                        : 'bg-white text-gray-800'
+                    } shadow-lg`}
+                    style={{ maxWidth: message.pdfUrl ? '40%' : '70%' }}
+                  >
+                    <p className="whitespace-pre-wrap leading-relaxed">{message.text}</p>
+                  </motion.div>
                   {message.pdfUrl && (
-                    <div className="mt-4 h-[600px] border border-gray-200 rounded-lg overflow-hidden">
+                    <div className="w-[500px] h-[600px] border border-gray-200 rounded-lg overflow-hidden bg-white shadow-lg">
                       <iframe
                         src={message.pdfUrl}
                         className="w-full h-full"
@@ -371,7 +375,7 @@ const ChatInterface = () => {
                       />
                     </div>
                   )}
-                </motion.div>
+                </div>
                 {message.sender === 'user' && (
                   <div className="w-12 h-12 rounded-full bg-gradient-to-r from-amber-500 to-[#FFA302] flex items-center justify-center">
                     <User className="text-white w-6 h-6" />

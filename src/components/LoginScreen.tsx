@@ -120,16 +120,23 @@ const LoginScreen = () => {
             onClick={handleGoogleLogin}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="w-full p-4 rounded-xl text-gray-700 font-medium shadow-md transition-all border-2 border-gray-200 hover:bg-gray-50 flex items-center justify-center gap-3"
+            className="w-full p-4 rounded-xl text-gray-700 font-medium shadow-md transition-all border border-gray-200 hover:bg-gray-50 flex items-center justify-center gap-3"
+            disabled={isLoading}
           >
-            <Image
-              src="/google.svg"
-              alt="Google"
-              width={24}
-              height={24}
-              className="object-contain"
-            />
-            <span>Google ile Devam Et</span>
+            {isLoading ? (
+              <Loader2 className="w-6 h-6 animate-spin" />
+            ) : (
+              <>
+                <Image
+                  src="/google.svg"
+                  alt="Google"
+                  width={20}
+                  height={20}
+                  className="object-contain"
+                />
+                <span>Google ile Devam Et</span>
+              </>
+            )}
           </motion.button>
 
           <div className="relative">

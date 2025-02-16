@@ -5,6 +5,7 @@ import { Send, User, Loader2, LogOut } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
+import Achievement from './Achievement';
 
 interface Message {
   id: number;
@@ -75,6 +76,8 @@ const ChatInterface = () => {
   const [threadId, setThreadId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
+  const [achievementVisible, setAchievementVisible] = useState(false);
+  const [citation, setCitation] = useState('');
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -159,6 +162,8 @@ const ChatInterface = () => {
                     const citation = extractCitation(botMessageText);
                     if (citation !== false) {
                       console.log('Found Citation:', citation);
+                      setCitation(citation);
+                      setAchievementVisible(true);
                       foundCitation = true;
                     }
                   }
@@ -210,156 +215,165 @@ const ChatInterface = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-b from-amber-50 to-orange-50">
-      <div className="bg-white shadow-lg p-6">
-        <div className="flex justify-between items-center">
-          <motion.div 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-3"
-          >
-            <div className="flex flex-col items-center gap-1">
-              <Avatar src="/levelLogo.png" alt="Bot Logo" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-3xl font-bold bg-gradient-to-r from-amber-500 to-[#FFA302] text-transparent bg-clip-text">
-                Level Asistan
-              </span>
-              <span className="text-sm text-gray-600">
-                Mahallenin Oyuncu Abisi
-              </span>
-            </div>
-          </motion.div>
-          
-          <div className="flex items-center gap-4">
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="flex items-center gap-3 bg-gray-50 p-2 px-4 rounded-xl"
+    <>
+      <Achievement
+        title="Kaynak Bulundu!"
+        subtitle={citation}
+        isVisible={achievementVisible}
+        onClose={() => setAchievementVisible(false)}
+      />
+      
+      <div className="flex flex-col h-screen bg-gradient-to-b from-amber-50 to-orange-50">
+        <div className="bg-white shadow-lg p-6">
+          <div className="flex justify-between items-center">
+            <motion.div 
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-3"
             >
-              <div className="flex items-center gap-3">
-                {userData?.image ? (
-                  <div className="w-10 h-10 rounded-full overflow-hidden relative">
-                    <Image
-                      src={userData.image}
-                      alt="Profil"
-                      fill
-                      className="object-cover"
-                    />
+              <div className="flex flex-col items-center gap-1">
+                <Avatar src="/levelLogo.png" alt="Bot Logo" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-3xl font-bold bg-gradient-to-r from-amber-500 to-[#FFA302] text-transparent bg-clip-text">
+                  Level Asistan
+                </span>
+                <span className="text-sm text-gray-600">
+                  Mahallenin Oyuncu Abisi
+                </span>
+              </div>
+            </motion.div>
+            
+            <div className="flex items-center gap-4">
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="flex items-center gap-3 bg-gray-50 p-2 px-4 rounded-xl"
+              >
+                <div className="flex items-center gap-3">
+                  {userData?.image ? (
+                    <div className="w-10 h-10 rounded-full overflow-hidden relative">
+                      <Image
+                        src={userData.image}
+                        alt="Profil"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-amber-500 to-[#FFA302] flex items-center justify-center">
+                      <User className="text-white w-6 h-6" />
+                    </div>
+                  )}
+                  <div className="flex flex-col">
+                    <span className="font-medium text-gray-900">
+                      {userData?.name || 'Kullanıcı'}
+                    </span>
+                    <span className="text-sm text-gray-500">
+                      {userData?.email}
+                    </span>
                   </div>
-                ) : (
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-amber-500 to-[#FFA302] flex items-center justify-center">
+                </div>
+              </motion.div>
+
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-[#FFA302] text-white hover:from-amber-600 hover:to-[#e59202] transition-all"
+              >
+                <LogOut className="w-5 h-5" />
+                <span>Çıkış Yap</span>
+              </motion.button>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          <AnimatePresence>
+            {messages.map((message) => (
+              <motion.div
+                key={message.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className={`flex items-end gap-2 ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
+                {message.sender === 'bot' && (
+                  <Avatar src="/levelLogo.png" alt="Bot Avatar" />
+                )}
+                <motion.div
+                  initial={{ scale: 0.9 }}
+                  animate={{ scale: 1 }}
+                  className={`max-w-[70%] rounded-2xl p-4 ${
+                    message.sender === 'user'
+                      ? 'bg-gradient-to-r from-amber-500 to-[#FFA302] text-white'
+                      : 'bg-white text-gray-800'
+                  } shadow-lg`}
+                >
+                  <p className="whitespace-pre-wrap leading-relaxed">{message.text}</p>
+                </motion.div>
+                {message.sender === 'user' && (
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-r from-amber-500 to-[#FFA302] flex items-center justify-center">
                     <User className="text-white w-6 h-6" />
                   </div>
                 )}
-                <div className="flex flex-col">
-                  <span className="font-medium text-gray-900">
-                    {userData?.name || 'Kullanıcı'}
-                  </span>
-                  <span className="text-sm text-gray-500">
-                    {userData?.email}
-                  </span>
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleLogout}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-[#FFA302] text-white hover:from-amber-600 hover:to-[#e59202] transition-all"
-            >
-              <LogOut className="w-5 h-5" />
-              <span>Çıkış Yap</span>
-            </motion.button>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
-        <AnimatePresence>
-          {messages.map((message) => (
-            <motion.div
-              key={message.id}
+              </motion.div>
+            ))}
+          </AnimatePresence>
+          
+          {isLoading && (
+            <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className={`flex items-end gap-2 ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+              className="flex items-center gap-2"
             >
-              {message.sender === 'bot' && (
-                <Avatar src="/levelLogo.png" alt="Bot Avatar" />
-              )}
-              <motion.div
-                initial={{ scale: 0.9 }}
-                animate={{ scale: 1 }}
-                className={`max-w-[70%] rounded-2xl p-4 ${
-                  message.sender === 'user'
-                    ? 'bg-gradient-to-r from-amber-500 to-[#FFA302] text-white'
-                    : 'bg-white text-gray-800'
-                } shadow-lg`}
-              >
-                <p className="whitespace-pre-wrap leading-relaxed">{message.text}</p>
-              </motion.div>
-              {message.sender === 'user' && (
-                <div className="w-12 h-12 rounded-full bg-gradient-to-r from-amber-500 to-[#FFA302] flex items-center justify-center">
-                  <User className="text-white w-6 h-6" />
-                </div>
-              )}
+              <Avatar src="/levelLogo.png" alt="Bot Avatar" />
+              <div className="bg-white rounded-2xl p-4 shadow-lg">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                >
+                  <Loader2 className="w-5 h-5 text-[#FFA302]" />
+                </motion.div>
+              </div>
             </motion.div>
-          ))}
-        </AnimatePresence>
-        
-        {isLoading && (
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-2"
-          >
-            <Avatar src="/levelLogo.png" alt="Bot Avatar" />
-            <div className="bg-white rounded-2xl p-4 shadow-lg">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-              >
-                <Loader2 className="w-5 h-5 text-[#FFA302]" />
-              </motion.div>
-            </div>
-          </motion.div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-
-      <motion.form 
-        onSubmit={handleSendMessage} 
-        className="bg-white p-6 shadow-lg"
-        initial={{ y: 100 }}
-        animate={{ y: 0 }}
-      >
-        <div className="flex items-center gap-4 max-w-4xl mx-auto">
-          <input
-            type="text"
-            value={inputMessage}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => setInputMessage(e.target.value)}
-            placeholder="Mesajınızı yazın..."
-            className="flex-1 p-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#FFA302] transition-all bg-white text-gray-800 placeholder-gray-500"
-            disabled={isLoading}
-          />
-          <motion.button
-            type="submit"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className={`text-white p-4 rounded-xl shadow-lg transition-all ${
-              isLoading 
-                ? 'opacity-50 cursor-not-allowed bg-gradient-to-r from-amber-400 to-[#FFA302]' 
-                : 'bg-gradient-to-r from-amber-500 to-[#FFA302] hover:from-amber-600 hover:to-[#e59202]'
-            }`}
-            disabled={isLoading}
-          >
-            <Send className="w-5 h-5" />
-          </motion.button>
+          )}
+          <div ref={messagesEndRef} />
         </div>
-      </motion.form>
-    </div>
+
+        <motion.form 
+          onSubmit={handleSendMessage} 
+          className="bg-white p-6 shadow-lg"
+          initial={{ y: 100 }}
+          animate={{ y: 0 }}
+        >
+          <div className="flex items-center gap-4 max-w-4xl mx-auto">
+            <input
+              type="text"
+              value={inputMessage}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setInputMessage(e.target.value)}
+              placeholder="Mesajınızı yazın..."
+              className="flex-1 p-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#FFA302] transition-all bg-white text-gray-800 placeholder-gray-500"
+              disabled={isLoading}
+            />
+            <motion.button
+              type="submit"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className={`text-white p-4 rounded-xl shadow-lg transition-all ${
+                isLoading 
+                  ? 'opacity-50 cursor-not-allowed bg-gradient-to-r from-amber-400 to-[#FFA302]' 
+                  : 'bg-gradient-to-r from-amber-500 to-[#FFA302] hover:from-amber-600 hover:to-[#e59202]'
+              }`}
+              disabled={isLoading}
+            >
+              <Send className="w-5 h-5" />
+            </motion.button>
+          </div>
+        </motion.form>
+      </div>
+    </>
   );
 };
 

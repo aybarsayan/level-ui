@@ -6,6 +6,9 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
 import Achievement from './Achievement';
+import { Viewer, Worker } from '@react-pdf-viewer/core';
+import '@react-pdf-viewer/core/lib/styles/index.css';
+import '@react-pdf-viewer/default-layout/lib/styles/index.css';
 
 interface Message {
   id: number;
@@ -17,6 +20,10 @@ interface UserData {
   name: string;
   email: string;
   image: string | null;
+}
+
+interface MessageWithPdf extends Message {
+  pdfUrl?: string;
 }
 
 const Avatar = ({ src, alt }: { src: string; alt: string }) => (
@@ -67,10 +74,13 @@ function extractCitation(text: string) {
   return match[1];
 }
 
+// Worker URL'ini statik olarak tanımla
+const WORKER_URL = '/pdf-worker/pdf.worker.min.js';
+
 const ChatInterface = () => {
   const { data: session } = useSession();
   const router = useRouter();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<MessageWithPdf[]>([]);
   const [inputMessage, setInputMessage] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [threadId, setThreadId] = useState<string | null>(null);
@@ -111,7 +121,7 @@ const ChatInterface = () => {
     e.preventDefault();
     if (!inputMessage.trim() || isLoading) return;
 
-    const userMessage: Message = {
+    const userMessage: MessageWithPdf = {
       id: Date.now(),
       text: inputMessage,
       sender: 'user'
@@ -175,9 +185,8 @@ const ChatInterface = () => {
                     const lastMessage = prev[prev.length - 1];
                     if (lastMessage?.sender === 'bot') {
                       return [...prev.slice(0, -1), {
-                        id: lastMessage.id,
-                        text: botMessageText,
-                        sender: 'bot'
+                        ...lastMessage,
+                        text: botMessageText
                       }];
                     } else {
                       return [...prev, {
@@ -234,10 +243,20 @@ const ChatInterface = () => {
         throw new Error('İndirme hatası');
       }
 
-      const { url } = await response.json();
+      const { data } = await response.json();
       
-      // Dosyayı indir
-      window.open(url, '_blank');
+      // PDF URL'ini son mesaja ekle
+      setMessages(prev => {
+        const lastMessage = prev[prev.length - 1];
+        if (lastMessage?.sender === 'bot') {
+          return [...prev.slice(0, -1), {
+            ...lastMessage,
+            pdfUrl: data
+          }];
+        }
+        return prev;
+      });
+      
     } catch (error) {
       console.error('Dosya indirme hatası:', error);
     } finally {
@@ -343,6 +362,15 @@ const ChatInterface = () => {
                   } shadow-lg`}
                 >
                   <p className="whitespace-pre-wrap leading-relaxed">{message.text}</p>
+                  {message.pdfUrl && (
+                    <div className="mt-4 h-[600px] border border-gray-200 rounded-lg overflow-hidden">
+                      <iframe
+                        src={message.pdfUrl}
+                        className="w-full h-full"
+                        title="PDF Görüntüleyici"
+                      />
+                    </div>
+                  )}
                 </motion.div>
                 {message.sender === 'user' && (
                   <div className="w-12 h-12 rounded-full bg-gradient-to-r from-amber-500 to-[#FFA302] flex items-center justify-center">

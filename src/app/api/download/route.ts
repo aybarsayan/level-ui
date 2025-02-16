@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION!,
@@ -23,10 +22,26 @@ export async function POST(request: Request) {
       Key: `level-dergiler-sayfalar/output/${filename}`,
     });
 
-    // Geçici URL oluştur (15 dakika geçerli)
-    const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 900 });
+    const response = await s3Client.send(command);
+    const stream = response.Body;
 
-    return NextResponse.json({ url: signedUrl });
+    if (!stream) {
+      throw new Error('PDF stream alınamadı');
+    }
+
+    // Stream'i buffer'a çevir
+    const chunks = [];
+    for await (const chunk of stream as any) {
+      chunks.push(chunk);
+    }
+    const buffer = Buffer.concat(chunks);
+
+    // Buffer'ı base64'e çevir
+    const base64 = buffer.toString('base64');
+
+    return NextResponse.json({ 
+      data: `data:application/pdf;base64,${base64}` 
+    });
   } catch (error) {
     console.error('Download error:', error);
     return NextResponse.json(

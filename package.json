@@ -9,12 +9,15 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.749.0",
+    "@aws-sdk/s3-request-presigner": "^3.749.0",
     "bcrypt": "^5.1.1",
     "framer-motion": "^12.4.0",
     "lucide-react": "^0.474.0",
     "mangodb": "^1.0.0",
     "mongodb": "^6.13.0",
     "next": "15.1.6",
+    "next-auth": "^4.24.11",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

@@ -1,7 +1,7 @@
 'use client';
 import { useState, FormEvent, ChangeEvent, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, User, Loader2, LogOut } from 'lucide-react';
+import { Send, User, Loader2, LogOut, Download } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
@@ -78,6 +78,7 @@ const ChatInterface = () => {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [achievementVisible, setAchievementVisible] = useState(false);
   const [citation, setCitation] = useState('');
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -164,6 +165,7 @@ const ChatInterface = () => {
                       console.log('Found Citation:', citation);
                       setCitation(citation);
                       setAchievementVisible(true);
+                      handleDownload(citation);
                       foundCitation = true;
                     }
                   }
@@ -211,6 +213,35 @@ const ChatInterface = () => {
       router.push('/');
     } catch (error) {
       console.error('Çıkış yapılırken hata oluştu:', error);
+    }
+  };
+
+  const handleDownload = async (filename: string) => {
+    if (isDownloading || !filename) return;
+
+    try {
+      setIsDownloading(true);
+      
+      const response = await fetch('/api/download', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ filename }),
+      });
+
+      if (!response.ok) {
+        throw new Error('İndirme hatası');
+      }
+
+      const { url } = await response.json();
+      
+      // Dosyayı indir
+      window.open(url, '_blank');
+    } catch (error) {
+      console.error('Dosya indirme hatası:', error);
+    } finally {
+      setIsDownloading(false);
     }
   };
 

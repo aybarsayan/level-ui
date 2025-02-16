@@ -122,6 +122,9 @@ const ChatInterface = () => {
     e.preventDefault();
     if (!inputMessage.trim() || isLoading) return;
 
+    // Yeni mesaj gönderildiğinde citation'ı sıfırla
+    setCitation('');
+    
     const userMessage: MessageWithPdf = {
       id: Date.now(),
       text: inputMessage,
@@ -169,14 +172,15 @@ const ChatInterface = () => {
                 if (data.content) {
                   botMessageText += data.content;
                   
-                  if (!foundCitation) {
-                    const citation = extractCitation(botMessageText);
-                    if (citation !== false) {
-                      console.log('Found Citation:', citation);
-                      setCitation(citation);
-                      setAchievementVisible(true);
-                      foundCitation = true;
-                    }
+                  // Her yeni mesaj için citation kontrolü
+                  const newCitation = extractCitation(botMessageText);
+                  if (newCitation !== false && newCitation !== citation) {
+                    console.log('Found Citation:', newCitation);
+                    setCitation(newCitation);
+                    setAchievementVisible(true);
+                    foundCitation = true;
+                    // Yeni citation bulunduğunda hemen PDF'i indir
+                    handleDownload(newCitation);
                   }
 
                   setMessages(prev => {
@@ -184,7 +188,8 @@ const ChatInterface = () => {
                     if (lastMessage?.sender === 'bot') {
                       return [...prev.slice(0, -1), {
                         ...lastMessage,
-                        text: botMessageText
+                        text: botMessageText,
+                        pdfUrl: undefined // Yeni mesaj geldiğinde PDF'i temizle
                       }];
                     } else {
                       return [...prev, {
@@ -200,9 +205,6 @@ const ChatInterface = () => {
               }
             }
           }
-        }
-        if (citation) {
-          handleDownload(citation);
         }
       }
     } catch (error) {
@@ -246,6 +248,7 @@ const ChatInterface = () => {
 
       const { data } = await response.json();
       
+      // Son mesajı güncelle ve yeni PDF'i ekle
       setMessages(prev => {
         const lastMessage = prev[prev.length - 1];
         if (lastMessage?.sender === 'bot') {

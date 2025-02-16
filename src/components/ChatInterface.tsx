@@ -90,6 +90,7 @@ const ChatInterface = () => {
   const [achievementVisible, setAchievementVisible] = useState(false);
   const [citation, setCitation] = useState('');
   const [isDownloading, setIsDownloading] = useState(false);
+  const [selectedPdf, setSelectedPdf] = useState<string | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -122,13 +123,15 @@ const ChatInterface = () => {
     e.preventDefault();
     if (!inputMessage.trim() || isLoading) return;
 
-    // Yeni mesaj gönderildiğinde citation'ı sıfırla
+    // Yeni mesaj başladığında citation'ı ve PDF'i temizle
     setCitation('');
+    setSelectedPdf(null);
     
     const userMessage: MessageWithPdf = {
       id: Date.now(),
       text: inputMessage,
-      sender: 'user'
+      sender: 'user',
+      pdfUrl: undefined
     };
 
     setMessages(prev => [...prev, userMessage]);
@@ -172,24 +175,26 @@ const ChatInterface = () => {
                 if (data.content) {
                   botMessageText += data.content;
                   
-                  // Her yeni mesaj için citation kontrolü
-                  const newCitation = extractCitation(botMessageText);
-                  if (newCitation !== false && newCitation !== citation) {
-                    console.log('Found Citation:', newCitation);
-                    setCitation(newCitation);
-                    setAchievementVisible(true);
-                    foundCitation = true;
-                    // Yeni citation bulunduğunda hemen PDF'i indir
-                    handleDownload(newCitation);
+                  // Citation kontrolünü sadece bir kez yap
+                  if (!foundCitation) {
+                    const newCitation = extractCitation(botMessageText);
+                    if (newCitation !== false && newCitation !== citation) {
+                      console.log('Found Citation:', newCitation);
+                      setCitation(newCitation);
+                      setAchievementVisible(true);
+                      foundCitation = true;
+                      // Citation bulunduğunda bir kez PDF'i indir
+                      await handleDownload(newCitation);
+                    }
                   }
 
+                  // Mesajı güncelle ama PDF'i koruyarak
                   setMessages(prev => {
                     const lastMessage = prev[prev.length - 1];
                     if (lastMessage?.sender === 'bot') {
                       return [...prev.slice(0, -1), {
                         ...lastMessage,
                         text: botMessageText,
-                        pdfUrl: undefined // Yeni mesaj geldiğinde PDF'i temizle
                       }];
                     } else {
                       return [...prev, {
@@ -233,6 +238,7 @@ const ChatInterface = () => {
 
     try {
       setIsDownloading(true);
+      console.log('Downloading PDF:', filename);
       
       const response = await fetch('/api/download', {
         method: 'POST',
@@ -247,6 +253,8 @@ const ChatInterface = () => {
       }
 
       const { data } = await response.json();
+      console.log('PDF data received, length:', data.length);
+      console.log('PDF data starts with:', data.substring(0, 50));
       
       // Son mesajı güncelle ve yeni PDF'i ekle
       setMessages(prev => {
@@ -268,6 +276,51 @@ const ChatInterface = () => {
     }
   };
 
+  // PDF görüntüleyici bileşenlerini güncelleyelim
+  const PDFViewer = ({ url }: { url: string }) => {
+    console.log('Rendering PDF with URL:', url.substring(0, 50));
+    
+    return (
+      <div className="w-[400px] h-[500px] rounded-lg overflow-hidden bg-white shadow-lg border border-gray-100">
+        <object
+          data={url}
+          type="application/pdf"
+          className="w-full h-full"
+          style={{
+            border: 'none',
+            borderRadius: '8px',
+          }}
+        >
+          <embed
+            src={url}
+            type="application/pdf"
+            className="w-full h-full"
+          />
+        </object>
+      </div>
+    );
+  };
+
+  const ModalPDFViewer = ({ url }: { url: string }) => {
+    console.log('Rendering Modal PDF with URL:', url.substring(0, 50));
+    
+    return (
+      <div className="w-full h-full">
+        <object
+          data={url}
+          type="application/pdf"
+          className="w-full h-full"
+        >
+          <embed
+            src={url}
+            type="application/pdf"
+            className="w-full h-full"
+          />
+        </object>
+      </div>
+    );
+  };
+
   return (
     <>
       <Achievement
@@ -277,6 +330,49 @@ const ChatInterface = () => {
         onClose={() => setAchievementVisible(false)}
       />
       
+      {/* PDF Modal */}
+      <AnimatePresence>
+        {selectedPdf && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSelectedPdf(null)}
+            className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", duration: 0.5 }}
+              className="relative w-[90vw] h-[90vh] bg-white rounded-xl shadow-2xl overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ModalPDFViewer url={selectedPdf} />
+              <button
+                onClick={() => setSelectedPdf(null)}
+                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/90 shadow-lg flex items-center justify-center hover:bg-white transition-colors"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6 text-gray-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="flex flex-col h-screen bg-gradient-to-b from-amber-50 to-orange-50">
         <div className="bg-white shadow-lg p-6">
           <div className="flex justify-between items-center">
@@ -376,20 +472,31 @@ const ChatInterface = () => {
                     <motion.div 
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      className="relative group"
+                      className="relative group cursor-pointer"
+                      onClick={() => {
+                        console.log('PDF clicked, URL:', message.pdfUrl?.substring(0, 50));
+                        setSelectedPdf(message.pdfUrl);
+                      }}
                     >
-                      <div className="w-[400px] h-[500px] rounded-lg overflow-hidden bg-white shadow-lg border border-gray-100">
-                        <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-gray-100 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <iframe
-                          src={`${message.pdfUrl}#toolbar=0&navpanes=0`}
-                          className="w-full h-full"
-                          title="PDF Görüntüleyici"
-                          style={{
-                            border: 'none',
-                            borderRadius: '8px',
-                          }}
-                        />
-                        <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-gray-100 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <PDFViewer url={message.pdfUrl} />
+                      {/* Maximize indicator */}
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/10 transition-colors">
+                        <div className="w-12 h-12 rounded-full bg-white/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transform scale-90 group-hover:scale-100 transition">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-6 w-6 text-gray-600"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5"
+                            />
+                          </svg>
+                        </div>
                       </div>
                     </motion.div>
                   )}

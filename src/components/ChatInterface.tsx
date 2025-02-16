@@ -31,6 +31,41 @@ const Avatar = ({ src, alt }: { src: string; alt: string }) => (
   </div>
 );
 
+function extractCitation(text: string) {
+  // Return false if there's no closing bracket - incomplete citation
+  if (!text.includes('】')) {
+    return false;
+  }
+
+  // Find the last opening bracket
+  const lastOpenBracket = text.lastIndexOf('【');
+  if (lastOpenBracket === -1) {
+    return false;
+  }
+
+  // Get the substring between the last opening bracket and the closing bracket
+  const potentialCitation = text.slice(lastOpenBracket);
+  const closingBracketIndex = potentialCitation.indexOf('】');
+  
+  if (closingBracketIndex === -1) {
+    return false;
+  }
+
+  // Extract the citation content
+  const citationContent = potentialCitation.slice(0, closingBracketIndex + 1);
+  
+  // Check if it matches the expected format
+  const regex = /【\d+:\d+†(.+?)】/;
+  const match = citationContent.match(regex);
+
+  if (!match) {
+    return false;
+  }
+
+  // Return just the filename
+  return match[1];
+}
+
 const ChatInterface = () => {
   const { data: session } = useSession();
   const router = useRouter();
@@ -94,16 +129,15 @@ const ChatInterface = () => {
         })
       });
 
-      // Thread ID'yi headerdan al
       const newThreadId = response.headers.get('X-Thread-Id');
       if (newThreadId) {
         setThreadId(newThreadId);
-        console.log('Thread ID:', newThreadId);
       }
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       let botMessageText = '';
+      let foundCitation = false;
 
       if (reader) {
         while (true) {
@@ -119,6 +153,17 @@ const ChatInterface = () => {
                 const data = JSON.parse(line.slice(6));
                 if (data.content) {
                   botMessageText += data.content;
+                  
+                  // Citation'ı kontrol et (eğer daha önce bulunmadıysa)
+                  if (!foundCitation) {
+                    const citation = extractCitation(botMessageText);
+                    if (citation !== false) {
+                      console.log('Found Citation:', citation);
+                      foundCitation = true;
+                    }
+                  }
+
+                  // Mesajı güncelle
                   setMessages(prev => {
                     const lastMessage = prev[prev.length - 1];
                     if (lastMessage?.sender === 'bot') {
@@ -145,7 +190,7 @@ const ChatInterface = () => {
       }
     } catch (error) {
       console.error('Error:', error);
-      setThreadId(null); // Hata durumunda thread'i sıfırla
+      setThreadId(null);
     } finally {
       setIsLoading(false);
       setInputMessage('');

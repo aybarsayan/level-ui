@@ -15,14 +15,9 @@ const Achievement = ({ title, subtitle, isVisible, onClose }: AchievementProps) 
 
   useEffect(() => {
     if (isVisible) {
-      // Başarım sesi çal
-      const audio = new Audio('/achievement.mp3'); // Ses dosyasını eklemeyi unutmayın
-      audio.play().catch(console.error);
-
-      // 5 saniye sonra otomatik kapat
       const timer = setTimeout(() => {
         onClose();
-      }, 5000);
+      }, 1000);
 
       return () => clearTimeout(timer);
     }
@@ -32,11 +27,12 @@ const Achievement = ({ title, subtitle, isVisible, onClose }: AchievementProps) 
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          initial={{ opacity: 0, y: -50, scale: 0.3 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -20, scale: 0.5 }}
+          initial={{ opacity: 0, x: 100, scale: 0.3 }}
+          animate={{ opacity: 1, x: 0, scale: 1 }}
+          exit={{ opacity: 0, x: 100, scale: 0.5 }}
           onClick={() => setIsExpanded(!isExpanded)}
-          className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 cursor-pointer"
+          className="fixed top-6 right-6 z-50 cursor-pointer"
+          whileHover={{ scale: 1.05 }}
         >
           <motion.div
             animate={isExpanded ? "expanded" : "collapsed"}

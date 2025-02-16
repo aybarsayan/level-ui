@@ -20,7 +20,7 @@ export async function POST(request: Request) {
 
     const command = new GetObjectCommand({
       Bucket: 'leveldergi',
-      Key: `level-dergiler-sayfalar/${filename}`,
+      Key: `level-dergiler-sayfalar/output/${filename}`,
     });
 
     // Geçici URL oluştur (15 dakika geçerli)

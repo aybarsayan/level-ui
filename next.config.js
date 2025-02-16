@@ -7,6 +7,9 @@ const nextConfig = {
     }
     return config
   },
+  images: {
+    domains: ['lh3.googleusercontent.com'], // Google resimleri için
+  },
 }
 
 module.exports = nextConfig 

@@ -4,12 +4,18 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Send, User, Loader2, LogOut } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { signOut } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
 
 interface Message {
   id: number;
   text: string;
   sender: 'user' | 'bot';
+}
+
+interface UserData {
+  name: string;
+  email: string;
+  image: string | null;
 }
 
 const Avatar = ({ src, alt }: { src: string; alt: string }) => (
@@ -26,12 +32,14 @@ const Avatar = ({ src, alt }: { src: string; alt: string }) => (
 );
 
 const ChatInterface = () => {
+  const { data: session } = useSession();
   const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [threadId, setThreadId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -40,6 +48,25 @@ const ChatInterface = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch('/api/user');
+        if (response.ok) {
+          const data = await response.json();
+          setUserData(data);
+        } else {
+          router.push('/');
+        }
+      } catch (error) {
+        console.error('Kullanıcı bilgileri alınamadı:', error);
+        router.push('/');
+      }
+    };
+
+    fetchUserData();
+  }, [router]);
 
   const handleSendMessage = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -159,15 +186,48 @@ const ChatInterface = () => {
             </div>
           </motion.div>
           
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleLogout}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-[#FFA302] text-white hover:from-amber-600 hover:to-[#e59202] transition-all"
-          >
-            <LogOut className="w-5 h-5" />
-            <span>Çıkış Yap</span>
-          </motion.button>
+          <div className="flex items-center gap-4">
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center gap-3 bg-gray-50 p-2 px-4 rounded-xl"
+            >
+              <div className="flex items-center gap-3">
+                {userData?.image ? (
+                  <div className="w-10 h-10 rounded-full overflow-hidden relative">
+                    <Image
+                      src={userData.image}
+                      alt="Profil"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-amber-500 to-[#FFA302] flex items-center justify-center">
+                    <User className="text-white w-6 h-6" />
+                  </div>
+                )}
+                <div className="flex flex-col">
+                  <span className="font-medium text-gray-900">
+                    {userData?.name || 'Kullanıcı'}
+                  </span>
+                  <span className="text-sm text-gray-500">
+                    {userData?.email}
+                  </span>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-[#FFA302] text-white hover:from-amber-600 hover:to-[#e59202] transition-all"
+            >
+              <LogOut className="w-5 h-5" />
+              <span>Çıkış Yap</span>
+            </motion.button>
+          </div>
         </div>
       </div>
 

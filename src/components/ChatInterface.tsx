@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Send, User, Loader2, LogOut } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { signOut } from 'next-auth/react';
 
 interface Message {
   id: number;
@@ -126,13 +127,11 @@ const ChatInterface = () => {
 
   const handleLogout = async () => {
     try {
-      const response = await fetch('/api/auth/logout', {
-        method: 'POST',
+      await signOut({ 
+        callbackUrl: '/',
+        redirect: false 
       });
-
-      if (response.ok) {
-        router.push('/');
-      }
+      router.push('/');
     } catch (error) {
       console.error('Çıkış yapılırken hata oluştu:', error);
     }

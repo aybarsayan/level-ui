@@ -23,31 +23,44 @@ const LoginScreen = () => {
     setError('');
 
     try {
-      const endpoint = isRegisterMode ? '/api/auth/register' : '/api/auth/login';
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+      if (isRegisterMode) {
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username: formData.username,
+            email: formData.email,
+            password: formData.password,
+            provider: 'credentials'
+          }),
+        });
 
-      if (response.ok) {
-        if (isRegisterMode) {
-          // Kayıt başarılı, giriş moduna geç
+        if (response.ok) {
           setIsRegisterMode(false);
           setFormData({ ...formData, password: '' });
           setError('Kayıt başarılı! Şimdi giriş yapabilirsiniz.');
         } else {
-          // Giriş başarılı, chat sayfasına yönlendir
-          router.push('/chat');
+          const data = await response.json();
+          setError(data.message);
         }
       } else {
-        const data = await response.json();
-        setError(data.message);
+        const result = await signIn('credentials', {
+          username: formData.username,
+          password: formData.password,
+          redirect: false,
+          callbackUrl: '/chat'
+        });
+
+        if (result?.error) {
+          setError('Kullanıcı adı veya şifre hatalı');
+        } else {
+          router.push('/chat');
+        }
       }
     } catch (error) {
-      console.error('Giriş hatası:', error);
+      console.error('İşlem hatası:', error);
       setError('Bir hata oluştu. Lütfen tekrar deneyin.');
     } finally {
       setIsLoading(false);
@@ -132,7 +145,7 @@ const LoginScreen = () => {
             <div>
               <input
                 type="text"
-                placeholder="Kullanıcı Adı"
+                placeholder="E-posta veya Kullanıcı Adı"
                 value={formData.username}
                 onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                 className="w-full p-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#FFA302] transition-all"

@@ -9,11 +9,16 @@ export async function POST(request: Request) {
     const { username, password } = body;
 
     const client = await clientPromise;
-    const db = client.db("leveldb"); // veritabanı adınız
+    const db = client.db("leveldb");
     const users = db.collection("users");
 
-    // Kullanıcıyı bul
-    const user = await users.findOne({ username });
+    // Önce email ile ara (email girişi için)
+    let user = await users.findOne({ email: username });
+    
+    // Email ile bulunamadıysa kullanıcı adı ile ara
+    if (!user) {
+      user = await users.findOne({ username });
+    }
 
     if (!user) {
       return NextResponse.json(
@@ -38,12 +43,12 @@ export async function POST(request: Request) {
       { status: 200 }
     );
     
-    // Token oluştur ve cookie'ye kaydet
+    // Session bilgilerini ayarla
     response.cookies.set('auth_token', user._id.toString(), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 60 * 60 * 24 // 24 saat
+      maxAge: 60 * 60 * 24
     });
 
     return response;

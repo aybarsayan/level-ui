@@ -5,10 +5,10 @@ import { hash } from 'bcrypt';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { username, password, email } = body;
+    const { username, password, email, provider = 'credentials' } = body;
 
     const client = await clientPromise;
-    const db = client.db("leveldb");
+    const db = client.db("test"); // leveldb yerine test kullan
     const users = db.collection("users");
 
     // Kullanıcı adı veya email kontrolü
@@ -34,6 +34,7 @@ export async function POST(request: Request) {
       username,
       email,
       password: hashedPassword,
+      provider,
       createdAt: new Date(),
     });
 

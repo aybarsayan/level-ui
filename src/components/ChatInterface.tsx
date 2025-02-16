@@ -356,7 +356,7 @@ const ChatInterface = () => {
                 {message.sender === 'bot' && (
                   <Avatar src="/levelLogo.png" alt="Bot Avatar" />
                 )}
-                <div className="flex items-start gap-4 max-w-full">
+                <div className="flex items-start gap-4 max-w-[90%]">
                   <motion.div
                     initial={{ scale: 0.9 }}
                     animate={{ scale: 1 }}
@@ -364,23 +364,38 @@ const ChatInterface = () => {
                       message.sender === 'user'
                         ? 'bg-gradient-to-r from-amber-500 to-[#FFA302] text-white'
                         : 'bg-white text-gray-800'
-                    } shadow-lg`}
-                    style={{ maxWidth: message.pdfUrl ? '40%' : '70%' }}
+                    } shadow-lg flex-shrink-0`}
+                    style={{ 
+                      maxWidth: message.pdfUrl ? '350px' : '100%',
+                      width: message.pdfUrl ? '350px' : 'auto'
+                    }}
                   >
                     <p className="whitespace-pre-wrap leading-relaxed">{message.text}</p>
                   </motion.div>
                   {message.pdfUrl && (
-                    <div className="w-[500px] h-[600px] border border-gray-200 rounded-lg overflow-hidden bg-white shadow-lg">
-                      <iframe
-                        src={message.pdfUrl}
-                        className="w-full h-full"
-                        title="PDF Görüntüleyici"
-                      />
-                    </div>
+                    <motion.div 
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="relative group"
+                    >
+                      <div className="w-[400px] h-[500px] rounded-lg overflow-hidden bg-white shadow-lg border border-gray-100">
+                        <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-gray-100 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <iframe
+                          src={`${message.pdfUrl}#toolbar=0&navpanes=0`}
+                          className="w-full h-full"
+                          title="PDF Görüntüleyici"
+                          style={{
+                            border: 'none',
+                            borderRadius: '8px',
+                          }}
+                        />
+                        <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-gray-100 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                    </motion.div>
                   )}
                 </div>
                 {message.sender === 'user' && (
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-r from-amber-500 to-[#FFA302] flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-r from-amber-500 to-[#FFA302] flex items-center justify-center flex-shrink-0">
                     <User className="text-white w-6 h-6" />
                   </div>
                 )}

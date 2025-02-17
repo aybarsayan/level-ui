@@ -91,6 +91,7 @@ const ChatInterface = () => {
   const [citation, setCitation] = useState('');
   const [isDownloading, setIsDownloading] = useState(false);
   const [selectedPdf, setSelectedPdf] = useState<string | null>(null);
+  const messageRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -454,6 +455,7 @@ const ChatInterface = () => {
                 )}
                 <div className="flex items-start gap-4 max-w-[90%]">
                   <motion.div
+                    ref={(el) => messageRefs.current[message.id] = el}
                     initial={{ scale: 0.9 }}
                     animate={{ scale: 1 }}
                     className={`rounded-2xl p-4 ${
@@ -473,10 +475,11 @@ const ChatInterface = () => {
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
                       className="relative group cursor-pointer"
-                      onClick={() => {
-                        console.log('PDF clicked, URL:', message.pdfUrl?.substring(0, 50));
-                        setSelectedPdf(message.pdfUrl);
+                      style={{
+                        marginTop: messageRefs.current[message.id] ? 
+                          `${(messageRefs.current[message.id]?.offsetHeight || 0) / 2 - 250}px` : '0'
                       }}
+                      onClick={() => setSelectedPdf(message.pdfUrl)}
                     >
                       <PDFViewer url={message.pdfUrl} />
                       {/* Maximize indicator */}
